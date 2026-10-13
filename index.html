@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0B0D10">
+<meta name="description" content="A private, easy-to-use trading consistency ledger with clear rules, daily P/L tracking, and backups.">
+<title>Consistency Ledger — Rule Tracker for Funded Traders</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0B0D10; --panel:#15181D; --panel2:#1B1F26; --line:#272C34;
+  --text:#EAEEF3; --muted:#8B94A3; --gold:#E3B341; --gold2:#C99A3A; --green:#3FB68B; --red:#E5586A;
+  --radius:12px;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#F4F2EC; --panel:#FFFFFF; --panel2:#FAF8F2; --line:#E3DED0;
+    --text:#1B1D1F; --muted:#6C6558; --gold:#B8863E; --gold2:#9C7230; --green:#1E8E63; --red:#C23A4C;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B0D10; --panel:#15181D; --panel2:#1B1F26; --line:#272C34;
+  --text:#EAEEF3; --muted:#8B94A3; --gold:#E3B341; --gold2:#C99A3A; --green:#3FB68B; --red:#E5586A;
+}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{margin:0;background:
+  radial-gradient(1200px 500px at 20% -10%, rgba(227,179,65,.08), transparent 60%),
+  var(--bg);
+  color:var(--text);font-family:'Inter',sans-serif;line-height:1.5;overflow-x:hidden;}
+body::before,body::after{content:'';position:fixed;z-index:-1;pointer-events:none;border-radius:50%;filter:blur(2px);opacity:.34;mix-blend-mode:screen;}
+body::before{width:460px;height:460px;left:var(--mx,8%);top:var(--my,8%);background:radial-gradient(circle,rgba(227,179,65,.13),transparent 68%);transform:translate(-50%,-50%);transition:left .35s ease-out,top .35s ease-out;}
+body::after{width:330px;height:330px;right:4%;bottom:10%;background:radial-gradient(circle,rgba(63,182,139,.09),transparent 70%);animation:floatGlow 12s ease-in-out infinite alternate;}
+@keyframes floatGlow{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(-45px,-25px,0) scale(1.16)}}
+.ambient{position:fixed;inset:0;z-index:-2;pointer-events:none;opacity:.28;background-image:radial-gradient(circle at 20% 30%,rgba(255,255,255,.18) 0 1px,transparent 1.5px),radial-gradient(circle at 70% 65%,rgba(227,179,65,.22) 0 1px,transparent 1.5px);background-size:130px 150px,190px 210px;animation:drift 24s linear infinite;}
+@keyframes drift{to{background-position:130px 150px,-190px -210px}}
+h1,h2,h3,.num{font-family:'Space Grotesk',sans-serif;}
+.wrap{max-width:1080px;margin:0 auto;padding:44px 20px 90px;}
+header{margin-bottom:32px;border-bottom:1px solid var(--line);padding-bottom:24px;}
+header .kicker{font-size:12.5px;color:var(--gold);font-weight:600;margin-bottom:8px;}
+header h1{font-size:28px;font-weight:700;margin:0 0 8px;letter-spacing:-.02em;}
+header p{margin:0;color:var(--muted);font-size:14.5px;max-width:52ch;}
+section{margin-bottom:30px;}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;
+  box-shadow:0 1px 0 rgba(255,255,255,.02) inset, 0 10px 28px -12px rgba(0,0,0,.45);}
+h2{font-size:13.5px;color:var(--muted);font-weight:600;margin:0 0 16px;}
+.grid{display:grid;gap:16px;}
+.grid.in2{grid-template-columns:1fr 1fr;}
+.grid.stats{grid-template-columns:repeat(6,1fr);}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:8px;}
+.field .row{display:flex;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:10px 12px;}
+.field input{background:none;border:none;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:16px;width:100%;outline:none;}
+.field .suf{color:var(--muted);font-size:13px;}
+.chipgroup{display:flex;flex-wrap:wrap;gap:8px;}
+.chip-opt{padding:9px 15px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--muted);
+  font-size:13.5px;font-family:'Space Grotesk',sans-serif;font-weight:500;cursor:pointer;transition:all .15s ease;}
+.chip-opt:hover{border-color:var(--gold);color:var(--text);}
+.chip-opt.active{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#15181D;border-color:transparent;font-weight:700;}
+.chip-opt:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+.customrow{margin-top:9px;display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 12px;max-width:220px;}
+.customrow input{background:none;border:none;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:14px;width:100%;outline:none;}
+.customrow .suf{color:var(--muted);font-size:12px;}
+.customrow input:focus-visible{outline:none;}
+.derived{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;padding-top:18px;border-top:1px dashed var(--line);}
+.derived .chip{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--muted);}
+.derived .chip b{color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:14.5px;}
+.stat{border:1px solid var(--line);border-radius:var(--radius);padding:15px;background:var(--panel);
+  box-shadow:0 1px 0 rgba(255,255,255,.02) inset;}
+.stat .label{font-size:11.5px;color:var(--muted);margin-bottom:7px;}
+.stat .val{font-size:19px;font-weight:600;}
+.pos{color:var(--green);} .neg{color:var(--red);} .warn{color:var(--gold);}
+.banner{border-radius:var(--radius);padding:20px 22px;border:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;}
+.banner .title{font-size:17.5px;font-weight:600;font-family:'Space Grotesk',sans-serif;}
+.banner .sub{color:var(--muted);font-size:13px;margin-top:4px;}
+.chart{width:100%;height:190px;display:block;}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);
+  box-shadow:0 10px 28px -12px rgba(0,0,0,.45);}
+table{width:100%;border-collapse:collapse;min-width:640px;font-size:13.5px;}
+th{text-align:left;font-weight:600;color:var(--muted);font-size:11.5px;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--panel2);position:sticky;top:0;}
+td{padding:9px 14px;border-bottom:1px solid var(--line);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(227,179,65,.03);}
+.num{font-family:'Space Grotesk',sans-serif;}
+input.actual{width:92px;background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:7px 9px;color:var(--text);font-family:'Space Grotesk',sans-serif;font-size:13px;}
+input.actual:focus-visible{outline:2px solid var(--gold);outline-offset:1px;}
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;}
+.b-yes{background:rgba(63,182,139,.15);color:var(--green);}
+.b-loss{background:rgba(229,88,106,.13);color:var(--red);}
+.b-breach{background:rgba(227,179,65,.17);color:var(--gold);}
+.b-none{background:rgba(139,148,163,.14);color:var(--muted);}
+.rowbtn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;}
+.rowbtn:hover{color:var(--red);}
+.empty{padding:34px 16px;text-align:center;color:var(--muted);font-size:13.5px;}
+.addrow{display:flex;justify-content:center;padding:14px;}
+button.add{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#15181D;border:none;padding:10px 20px;border-radius:9px;font-weight:700;font-size:13.5px;cursor:pointer;font-family:'Inter',sans-serif;transition:filter .15s;}
+button.add:hover{filter:brightness(1.08);}
+button.add:focus-visible{outline:2px solid var(--gold);outline-offset:2px;}
+footer{color:var(--muted);font-size:12px;text-align:center;margin-top:38px;}
+@media(max-width:760px){ .grid.in2{grid-template-columns:1fr;} .grid.stats{grid-template-columns:1fr 1fr;} }
+@media(prefers-reduced-motion:reduce){ *{transition:none!important;} }
+
+/* Bigger type, clearer instructions, and comfortable touch targets. */
+:root{font-size:16px}
+body{font-size:16px;line-height:1.6}
+.wrap{max-width:1160px;padding-top:22px}
+header.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:32px;padding:48px 2px 30px}
+header.hero h1{font-size:clamp(42px,6vw,72px);line-height:1.02;letter-spacing:-.065em;margin:13px 0}
+header.hero p{max-width:58ch;font-size:17px;line-height:1.7}
+header.hero .kicker{font-family:'Space Grotesk',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.1em}
+header.hero .balance-card{min-width:230px;border-top:1px solid var(--line);padding:14px 0 2px 18px;text-align:right}
+.balance-card .balance-label,.balance-card .balance-caption{color:var(--muted);font-size:12px}
+.balance-card .balance-value{font-size:36px;font-weight:700;letter-spacing:-.05em}
+.topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:0 0 16px;border-bottom:1px solid var(--line)}
+.brand{display:flex;align-items:center;gap:10px;color:var(--text);font-size:15px;font-weight:700}
+.brand-mark{display:grid;place-items:center;width:32px;height:32px;border:1px solid var(--gold);border-radius:50%;color:var(--gold)}
+.toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.toolbar button,.toolbar label{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:7px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:transform .16s,border-color .16s,background .16s}
+.toolbar button:hover,.toolbar label:hover{border-color:var(--gold);background:var(--panel2);transform:translateY(-1px)}
+.toolbar .danger-button:hover{border-color:var(--red);color:var(--red)}
+.file-input{position:absolute;width:1px;height:1px;clip:rect(0,0,0,0);clip-path:inset(50%);overflow:hidden;white-space:nowrap}
+.guide{padding:22px;margin-bottom:18px;animation:guide-in .55s ease both}
+@keyframes guide-in{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+.guide-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.guide-step{display:flex;gap:10px;padding:13px;border:1px solid var(--line);border-radius:11px;background:var(--panel2)}
+.guide-step-number{display:grid;place-items:center;flex:none;width:30px;height:30px;border:1px solid rgba(227,179,65,.45);border-radius:9px;color:var(--gold);font:12px 'Space Grotesk',sans-serif}
+.guide-step h3{margin:0 0 4px;color:var(--text);font-size:14px}
+.guide-step p{margin:0;color:var(--muted);font-size:12.5px;line-height:1.55}
+.guide-example{margin:12px 0 0;padding:11px 13px;border:1px solid rgba(227,179,65,.25);border-radius:10px;background:rgba(227,179,65,.06);font-size:13px}
+.guide-example strong{margin-right:8px;color:var(--gold);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.guide-note{margin:10px 0 0;color:var(--muted);font-size:12px;line-height:1.55}
+h2{font-size:20px;color:var(--text)}
+.field label{font-size:13px}
+.field .row{min-height:48px}
+.chip-opt{min-height:36px;font-size:13px}
+.derived .chip{padding:11px 14px;font-size:14px}
+.derived .chip b{font-size:16px}
+.banner .title{font-size:19px}
+.banner .sub{font-size:14px;line-height:1.55}
+.grid.stats{grid-template-columns:repeat(4,minmax(0,1fr))}
+.stat{min-height:106px;padding:15px}
+.stat .label{font-size:12px}
+.stat .val{font-size:22px}
+.stat .detail{margin-top:5px;color:var(--muted);font-size:12px}
+.chart{height:235px}
+.chart-stage{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:11px;background:var(--panel2)}
+.chart-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--muted);text-align:center;pointer-events:none}
+.chart-empty strong{color:var(--text);font-size:15px}
+.chart-empty span{font-size:13px}
+.chart-empty[hidden]{display:none}
+.chart-grid{stroke:var(--line);stroke-width:1;opacity:.7}
+.chart-zero{stroke:var(--line-strong);stroke-width:1.2}
+.chart-target{fill:none;stroke:var(--muted);stroke-width:1.7;stroke-dasharray:6 7}
+.chart-actual{fill:none;stroke:var(--gold);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;path-length:1;stroke-dasharray:1;stroke-dashoffset:1;animation:draw-chart .75s ease-out forwards}
+.chart-point{fill:var(--gold);stroke:var(--panel);stroke-width:2}
+@keyframes draw-chart{to{stroke-dashoffset:0}}
+.chart-legend{display:flex;flex-wrap:wrap;gap:14px;color:var(--muted);font:12px 'Space Grotesk',sans-serif}
+.chart-legend span{display:flex;align-items:center;gap:7px}
+.chart-legend i{display:inline-block;width:18px;height:2px;background:var(--gold)}
+.chart-legend i.target{height:0;border-top:1.5px dashed var(--muted);background:transparent}
+.chart-footer{display:flex;justify-content:space-between;gap:8px;padding-top:9px;color:var(--muted);font:11px 'Space Grotesk',sans-serif}
+.section-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:15px}
+.section-head h2{margin-bottom:0}
+.field-help{margin:8px 0 0;color:var(--muted);font-size:12px;line-height:1.55}
+.day-name{color:var(--text);font-weight:600}
+.table-status{display:inline-flex;padding:4px 9px;border-radius:99px;background:rgba(139,148,163,.12);color:var(--muted);font-size:12px}
+.status-ahead{background:rgba(63,182,139,.12);color:var(--green)}
+.status-behind{background:rgba(139,148,163,.12);color:var(--muted)}
+.badge-empty{background:rgba(139,148,163,.12);color:var(--muted)}
+.badge-good{background:rgba(63,182,139,.14);color:var(--green)}
+.badge-loss{background:rgba(229,88,106,.13);color:var(--red)}
+.badge-breach{background:rgba(227,179,65,.17);color:var(--gold)}
+.scroll-hint{margin:8px 0 0;color:var(--muted);font-size:12px}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+table{min-width:740px;font-size:14px}
+th{font-size:11px;padding:12px 14px}
+td{padding:11px 14px;font-size:14px}
+input.actual{height:38px;font-size:14px}
+.badge{font-size:12px;padding:4px 10px}
+.empty{font-size:14px;padding:42px 16px}
+button.add{min-height:42px;padding:10px 16px;font-size:14px}
+footer{font-size:12px;line-height:1.6}
+.toast{position:fixed;right:18px;bottom:18px;z-index:10;max-width:min(420px,calc(100% - 36px));padding:11px 15px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--text);box-shadow:0 10px 30px rgba(0,0,0,.2);opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity .2s,transform .2s}
+.toast.show{opacity:1;transform:none}
+@media(max-width:900px){.guide-steps{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){header.hero{display:block;padding:38px 2px 25px}header.hero .balance-card{margin-top:22px;text-align:left;padding-left:0}.guide-steps{grid-template-columns:1fr}.guide-step{padding:12px}.grid.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:520px){.wrap{width:calc(100% - 28px);padding-top:14px}.toolbar{width:100%;justify-content:flex-start}.toolbar button,.toolbar label{min-height:38px;font-size:11px;padding:7px 9px}header.hero h1{font-size:43px}header.hero p{font-size:16px}.card{padding:17px}.guide{padding:17px}.guide-step p{font-size:13px}.derived{display:grid;grid-template-columns:1fr 1fr}.banner{align-items:flex-start;padding:16px}.banner .sub{font-size:13px}.chart{height:205px}.section-head{align-items:flex-start}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="ambient" aria-hidden="true"></div>
+<div class="wrap">
+  <nav class="topbar" aria-label="Ledger tools">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span><span>Consistency Ledger</span></div>
+    <div class="toolbar">
+      <button type="button" id="themeToggle" aria-pressed="false">Use light mode</button>
+      <button type="button" id="exportBackup">Export backup</button>
+      <label for="backupFile">Import backup</label><input class="file-input" type="file" id="backupFile" accept="application/json,.json" aria-label="Choose a Consistency Ledger JSON backup">
+      <button type="button" class="danger-button" id="resetLedger">Reset ledger</button>
+    </div>
+  </nav>
+  <header class="hero">
+    <div>
+    <div class="kicker">Consistency rule tracker</div>
+    <h1>Trade with clarity.<br><span style="color:var(--gold)">One day at a time.</span></h1>
+    <p>Set your challenge rules, record your daily results, and see your consistency and pace in one clear view.</p>
+    </div>
+    <div class="balance-card"><div class="balance-label">CURRENT BALANCE</div><div class="balance-value" id="balanceVal">—</div><div class="balance-caption"><span id="cumulativeVal">$0.00</span> cumulative P/L</div></div>
+  </header>
+
+  <section class="card guide" aria-labelledby="guideTitle">
+    <div class="section-head"><div><div class="kicker">Quick start</div><h2 id="guideTitle">How to use your ledger</h2></div><span style="color:var(--muted);font-size:12px">Set up in about a minute</span></div>
+    <div class="guide-steps">
+      <article class="guide-step"><span class="guide-step-number">01</span><div><h3>Enter your challenge rules</h3><p>Set the account size, consistency percentage, profit target, and evaluation days from your firm’s rules.</p></div></article>
+      <article class="guide-step"><span class="guide-step-number">02</span><div><h3>Log each trading day</h3><p>After the day is complete, add its net P/L in dollars. Enter losses with a minus sign.</p></div></article>
+      <article class="guide-step"><span class="guide-step-number">03</span><div><h3>Read your pace and cap</h3><p>Check the status, chart, and daily warnings. A result exactly at the cap remains within the limit.</p></div></article>
+      <article class="guide-step"><span class="guide-step-number">04</span><div><h3>Save or move your data</h3><p>Your entries stay in this browser. Export a backup to keep a copy or import it on another device.</p></div></article>
+    </div>
+    <div class="guide-example"><strong>Example</strong>$50,000 account · 8% target = $4,000 profit target · 30% rule = $1,200 max day · at least 4 trading days</div>
+    <p class="guide-note"><strong>Check your firm’s wording:</strong> this tracker calculates the daily cap as a percentage of the profit target. Some firms use a different formula, such as the best day compared with total profits. Confirm the exact rule before relying on the result.</p>
+  </section>
+
+  <section class="card">
+    <h2>01 · Challenge setup</h2>
+    <div class="grid in2">
+      <div class="field"><label class="field-title" for="accountCustom">Account size <span>USD</span></label><div class="chipgroup" id="accountChips" aria-label="Common account sizes"></div><div class="customrow"><input id="accountCustom" type="number" min="0" step="100" inputmode="decimal" placeholder="Enter custom size"><span class="suf">$</span></div></div>
+      <div class="field"><label class="field-title" for="consistencyCustom">Consistency rule <span>% of target</span></label><div class="chipgroup" id="consistencyChips" aria-label="Common consistency percentages"></div><div class="customrow"><input id="consistencyCustom" type="number" min="0" max="100" step="1" inputmode="decimal" placeholder="Enter custom %"><span class="suf">%</span></div><p class="field-help">This tracker calculates the max profit for one day as a share of your full profit target.</p></div>
+    </div>
+    <div class="grid in2" style="margin-top:16px">
+      <div class="field"><label class="field-title" for="targetPct">Profit target <span>of account</span></label><div class="row"><input id="targetPct" type="number" min="0" value="4" step="0.5" inputmode="decimal"><span class="suf">%</span></div></div>
+      <div class="field"><label class="field-title" for="periodDays">Evaluation period <span>calendar days</span></label><div class="row"><input id="periodDays" type="number" min="1" value="30" step="1" inputmode="numeric"><span class="suf">days</span></div></div>
+    </div>
+    <div class="derived" id="derived"></div>
+  </section>
+
+  <section class="banner card" id="verdictBanner" aria-live="polite">
+    <div><div class="title" id="verdictTitle">Set your challenge rules</div><div class="sub" id="verdictSub">Add your account size and rule details to begin.</div></div>
+    <div style="text-align:right"><div class="sub">Days logged</div><div class="num" style="font-size:22px;font-weight:700"><span id="daysLogged">0</span><small id="daysPlanned"></small></div></div>
+  </section>
+
+  <section>
+    <h2 style="margin-left:2px">02 · Performance snapshot</h2>
+    <div class="grid stats" id="statsGrid"></div>
+  </section>
+
+  <section class="card chart-card">
+    <div class="section-head"><div><div class="kicker">03 · Your trajectory</div><h2>Equity vs. target roadmap</h2></div><div class="chart-legend"><span><i></i>Actual P/L</span><span><i class="target"></i>Target pace</span></div></div>
+    <div class="chart-stage"><svg class="chart" id="chartSvg" viewBox="0 0 1000 200" preserveAspectRatio="none" role="img" aria-label="Chart comparing cumulative profit with your target pace"></svg><div class="chart-empty" id="chartEmpty"><strong>Your roadmap starts here</strong><span>Add a trading day to draw your progress.</span></div></div>
+    <div class="chart-footer"><span>Day 0</span><span id="chartTarget">Set up your target to see the pace line</span><span id="chartLastDay">Waiting for first day</span></div>
+  </section>
+
+  <section>
+    <div class="section-head"><div><div class="kicker">04 · Your journal</div><h2>Daily trade log</h2></div><button class="add" id="addDay" type="button">+ Add trading day</button></div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th scope="col">Day</th><th scope="col">Daily target</th><th scope="col">Actual net P/L</th><th scope="col">Cumulative</th><th scope="col">Pace</th><th scope="col">Consistency</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+        <tbody id="logBody"></tbody>
+      </table>
+    </div>
+    <p class="scroll-hint">On a small screen, swipe the table sideways to see every column.</p>
+  </section>
+
+  <footer><strong>Consistency Ledger</strong> · Your entries stay in this browser. Verify your firm’s rules and numbers before relying on this summary.</footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>(n<0?'-$':'$')+Math.abs(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+const THEME_KEY='consistencyLedgerTheme';
+const ACCOUNT_OPTIONS=[5000,10000,15000,25000,50000,100000];
+const CONSISTENCY_OPTIONS=[5,10,15,20,25,30,35,40,45,50];
+
+let accountSize=null, consistencyPct=null, trades=[];
+let toastTimer=null;
+
+function notify(message){
+  const toast=$('toast');
+  toast.textContent=message;
+  toast.classList.add('show');
+  if(toastTimer) clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>toast.classList.remove('show'),3400);
+}
+function applyTheme(theme){
+  if(theme==='dark'||theme==='light') document.documentElement.setAttribute('data-theme',theme);
+  else document.documentElement.removeAttribute('data-theme');
+  const dark=theme==='dark'||(!theme&&!matchMedia('(prefers-color-scheme: light)').matches);
+  $('themeToggle').textContent=dark?'Use light mode':'Use dark mode';
+  $('themeToggle').setAttribute('aria-pressed',String(dark));
+}
+
+function buildChips(container,options,current,onPick,formatter){
+  container.innerHTML=options.map(v=>
+    `<button type="button" class="chip-opt${v===current?' active':''}" data-v="${v}" aria-pressed="${v===current}">${formatter(v)}</button>`
+  ).join('');
+  container.querySelectorAll('.chip-opt').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      onPick(parseInt(btn.dataset.v));
+      if(container.id==='accountChips') $('accountCustom').value='';
+      if(container.id==='consistencyChips') $('consistencyCustom').value='';
+      container.querySelectorAll('.chip-opt').forEach(b=>{b.classList.toggle('active',b===btn);b.setAttribute('aria-pressed',String(b===btn));});
+      render();
+    });
+  });
+}
+
+function load(){
+  try{
+    applyTheme(localStorage.getItem(THEME_KEY));
+    const saved=JSON.parse(localStorage.getItem('consistencyLedger')||'null');
+    if(saved){
+      if(saved.accountSize!==undefined && saved.accountSize!==null && !isNaN(saved.accountSize)) accountSize=Number(saved.accountSize);
+      if(saved.consistencyPct!==undefined && saved.consistencyPct!==null && !isNaN(saved.consistencyPct)) consistencyPct=Number(saved.consistencyPct);
+      if(saved.accountCustom!==undefined) $('accountCustom').value=saved.accountCustom;
+      if(saved.consistencyCustom!==undefined) $('consistencyCustom').value=saved.consistencyCustom;
+      if(saved.targetPct!==undefined) $('targetPct').value=saved.targetPct;
+      if(saved.periodDays!==undefined) $('periodDays').value=saved.periodDays;
+      if(Array.isArray(saved.trades)) trades=saved.trades.map(value=>value===null||value===''||!Number.isFinite(Number(value))?null:Number(value));
+    }
+  }catch(e){}
+}
+function save(){
+  try{
+    localStorage.setItem('consistencyLedger',JSON.stringify({
+      accountSize, consistencyPct, accountCustom:$('accountCustom').value, consistencyCustom:$('consistencyCustom').value, targetPct:$('targetPct').value, periodDays:$('periodDays').value, trades
+    }));
+  }catch(e){}
+}
+
+function render(){
+  const targetPct=Math.max(0,parseFloat($('targetPct').value)||0);
+  const periodDays=Math.max(1,parseInt($('periodDays').value,10)||30);
+  const account=Number(accountSize)||0;
+  const consistency=Number(consistencyPct)||0;
+  const targetDollar=account*targetPct/100;
+  const maxDaily=targetDollar*consistency/100;
+  const hasSetup=account>0&&targetPct>0&&consistency>0&&consistency<=100&&periodDays>0&&targetDollar>0;
+  const minDays=hasSetup?Math.ceil(100/consistency):0;
+  const dailyTarget=targetDollar/periodDays;
+
+  $('derived').innerHTML=
+    '<div class="chip">Profit target <b>'+(hasSetup?fmt(targetDollar):'—')+'</b></div>'+ 
+    '<div class="chip">Maximum profit in one day <b>'+(hasSetup?fmt(maxDaily):'—')+'</b></div>'+ 
+    '<div class="chip">Minimum trading days <b>'+(hasSetup?minDays+' days':'—')+'</b></div>'+ 
+    '<div class="chip">Average target per day <b>'+(hasSetup?fmt(dailyTarget):'—')+'</b></div>';
+
+  let cumulative=0,wins=0,losses=0,netProfit=0,netLoss=0,daysTraded=0,breaches=0,highest=-Infinity;
+  let bodyHtml='',points=[0],targetPoints=[0];
+  trades.forEach((raw,index)=>{
+    const actual=raw===null||raw===''||!Number.isFinite(Number(raw))?null:Number(raw);
+    if(actual!==null){
+      daysTraded++; cumulative+=actual;
+      if(actual>0){wins++;netProfit+=actual;highest=Math.max(highest,actual);}
+      if(actual<0){losses++;netLoss+=actual;}
+      if(hasSetup&&actual>maxDaily+0.000001) breaches++;
+    }
+    const day=index+1;
+    const capBreach=hasSetup&&actual!==null&&actual>maxDaily+0.000001;
+    const paceMet=hasSetup&&cumulative>=dailyTarget*day;
+    let badgeClass='badge-empty',badgeText=actual===null?'Awaiting entry':'Set challenge rules';
+    if(actual!==null&&hasSetup){
+      if(actual<0){badgeClass='badge-loss';badgeText='Loss day';}
+      else if(capBreach){badgeClass='badge-breach';badgeText='Over daily cap';}
+      else{badgeClass='b-yes';badgeText='Within cap';}
+    }
+    bodyHtml+='<tr>'+ 
+      '<td><span class="day-name">Day '+day+'</span></td>'+ 
+      '<td class="num">'+(hasSetup?fmt(dailyTarget):'—')+'</td>'+ 
+      '<td><input class="actual num" type="number" step="0.01" inputmode="decimal" data-i="'+index+'" value="'+(actual===null?'':actual)+'" placeholder="Enter P/L" aria-label="Actual net profit or loss for day '+day+'"></td>'+ 
+      '<td class="num '+(cumulative>=0?'pos':'neg')+'">'+fmt(cumulative)+'</td>'+ 
+      '<td><span class="table-status '+(hasSetup?(paceMet?'status-ahead':'status-behind'):'status-behind')+'">'+(hasSetup?(paceMet?'Ahead':'Behind'):'—')+'</span></td>'+ 
+      '<td><span class="badge '+badgeClass+'">'+badgeText+'</span></td>'+ 
+      '<td><button class="rowbtn" type="button" data-del="'+index+'" aria-label="Remove day '+day+'" title="Remove day">×</button></td>'+ 
+      '</tr>';
+    points.push(cumulative);
+    targetPoints.push(dailyTarget*day);
+  });
+  if(trades.length===0) bodyHtml='<tr><td colspan="7" class="empty">No trading days yet. Choose “Add trading day” when you are ready to log a result.</td></tr>';
+  $('logBody').innerHTML=bodyHtml;
+
+  const winrate=wins+losses?(wins/(wins+losses)*100):0;
+  const profitFactor=netLoss<0?netProfit/Math.abs(netLoss):(netProfit>0?Infinity:0);
+  const targetReached=hasSetup&&cumulative>=targetDollar&&targetDollar>0;
+  const accountPassed=targetReached&&daysTraded>=minDays&&breaches===0;
+  const remainingDays=Math.max(periodDays-daysTraded,1);
+  const idealDaily=Math.max(targetDollar-cumulative,0)/remainingDays;
+  const balance=account>0?account+cumulative:null;
+  $('balanceVal').textContent=balance===null?'—':fmt(balance);
+  $('cumulativeVal').textContent=cumulative>0?'+'+fmt(cumulative):fmt(cumulative);
+  $('cumulativeVal').className=cumulative>=0?'pos':'neg';
+  $('daysLogged').textContent=daysTraded;
+  $('daysPlanned').textContent=hasSetup?' / '+periodDays:'';
+
+  let title='Set your challenge rules',description='Add your account size and rule details to begin.',tone='var(--gold)';
+  if(!hasSetup&&trades.length){title='Finish your setup';description='Add valid challenge rules to calculate your pace and daily cap.';}
+  else if(hasSetup&&breaches){title='Daily consistency cap exceeded';description=breaches+' logged day'+(breaches===1?' is':'s are')+' above '+fmt(maxDaily)+'. Check your firm’s exact rule.';tone='var(--red)';}
+  else if(accountPassed){title='Target reached within your rule';description='You reached '+fmt(targetDollar)+' across '+daysTraded+' logged trading day'+(daysTraded===1?'':'s')+'.';tone='var(--green)';}
+  else if(hasSetup&&targetReached&&daysTraded<minDays){title='Target reached — minimum days remain';description='This setup calls for at least '+minDays+' trading days. You have logged '+daysTraded+'.';}
+  else if(hasSetup&&trades.length){title='In progress';description='About '+fmt(idealDaily)+' per remaining day would reach the target in the current window.';}
+  $('verdictTitle').textContent=title;
+  $('verdictTitle').style.color=tone;
+  $('verdictSub').textContent=description;
+
+  const pfDisplay=profitFactor===Infinity?'∞':(profitFactor?profitFactor.toFixed(2):'—');
+  const stats=[
+    ['Days traded',daysTraded,hasSetup?Math.max(periodDays-daysTraded,0)+' remaining in window':'Enter challenge rules',''],
+    ['Win rate',wins+losses?winrate.toFixed(1)+'%':'—',wins+' wins · '+losses+' losses',''],
+    ['Net profit',fmt(netProfit),'Winning days combined','pos'],
+    ['Net loss',fmt(netLoss),'Losing days combined','neg'],
+    ['Profit factor',pfDisplay,'Gross profit ÷ gross loss',profitFactor>1?'pos':(profitFactor&&profitFactor<1?'neg':'')],
+    ['Highest profit day',Number.isFinite(highest)?fmt(highest):'—',hasSetup&&highest>maxDaily?'Over daily cap':'Largest winning day',hasSetup&&highest>maxDaily?'warn':''],
+    ['Cumulative P/L',fmt(cumulative),'Across all logged days',cumulative>=0?'pos':'neg'],
+    ['Daily cap warnings',breaches,breaches?'Review highlighted days':(hasSetup?'No cap warnings':'Set up your rule'),breaches?'neg':'pos'],
+    ['Profit target',hasSetup?fmt(targetDollar):'—',targetReached?'Reached':'Challenge setup',targetReached?'pos':''],
+    ['Target still needed',hasSetup?fmt(Math.max(targetDollar-cumulative,0)):'—','Based on cumulative P/L',''],
+    ['Minimum days',hasSetup?minDays:'—','From the consistency percentage',''],
+    ['Average target / day',hasSetup?fmt(dailyTarget):'—','Target divided by evaluation days','']
+  ];
+  $('statsGrid').innerHTML=stats.map(s=>'<div class="stat"><div class="label">'+s[0]+'</div><div class="val '+s[3]+'">'+s[1]+'</div><div class="detail">'+s[2]+'</div></div>').join('');
+  $('accountChips').querySelectorAll('.chip-opt').forEach(b=>{const active=Number(b.dataset.v)===accountSize;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
+  $('consistencyChips').querySelectorAll('.chip-opt').forEach(b=>{const active=Number(b.dataset.v)===consistencyPct;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
+  $('chartTarget').textContent=hasSetup?'Target '+fmt(targetDollar):'Set up your target to see the pace line';
+  $('chartLastDay').textContent=trades.length?'Day '+trades.length:'Waiting for first day';
+  $('chartEmpty').hidden=trades.length>0;
+  drawChart(points,hasSetup?targetPoints:[]);
+  save();
+}
+function drawChart(actualPts,targetPts){
+  const svg=$('chartSvg'),w=1000,h=200,pad=12;
+  const all=actualPts.concat(targetPts);
+  const min=Math.min(0,...all),max=Math.max(1,...all),range=max-min||1;
+  const x=(i,n)=>n<=1?w/2:pad+(i/(n-1))*(w-pad*2);
+  const y=v=>h-pad-((v-min)/range)*(h-pad*2);
+  const path=arr=>arr.map((v,i)=>(i===0?'M':'L')+x(i,arr.length).toFixed(1)+','+y(v).toFixed(1)).join(' ');
+  let markup='';
+  [0.25,0.5,0.75].forEach(r=>{const gy=h*r;markup+='<line class="chart-grid" x1="0" x2="'+w+'" y1="'+gy+'" y2="'+gy+'"/>';});
+  const zero=y(0).toFixed(1);
+  markup+='<line class="chart-zero" x1="0" x2="'+w+'" y1="'+zero+'" y2="'+zero+'"/>';
+  if(targetPts.length>1) markup+='<path class="chart-target" d="'+path(targetPts)+'"/>';
+  if(actualPts.length>1){
+    markup+='<path class="chart-actual" pathLength="1" d="'+path(actualPts)+'"/>';
+    actualPts.forEach((v,i)=>{markup+='<circle class="chart-point" cx="'+x(i,actualPts.length)+'" cy="'+y(v)+'" r="'+(i===actualPts.length-1?5:3)+'"/>';});
+  }
+  svg.innerHTML=markup;
+}
+document.addEventListener('input',e=>{
+  const target=e.target;
+  if(target.classList.contains('actual')){
+    const i=Number(target.dataset.i);
+    let caret=null;
+    try{caret=target.selectionStart;}catch(_){}
+    trades[i]=target.value===''?null:parseFloat(target.value);
+    render();
+    const next=document.querySelector('input.actual[data-i="'+i+'"]');
+    if(next){next.focus({preventScroll:true});try{if(caret!==null)next.setSelectionRange(caret,caret);}catch(_){}}
+  }else if(target.id==='accountCustom'){
+    accountSize=target.value===''?null:Math.max(0,parseFloat(target.value)||0);
+    $('accountChips').querySelectorAll('.chip-opt').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false');});
+    render();
+  }else if(target.id==='consistencyCustom'){
+    consistencyPct=target.value===''?null:Math.min(100,Math.max(0,parseFloat(target.value)||0));
+    $('consistencyChips').querySelectorAll('.chip-opt').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-pressed','false');});
+    render();
+  }else if(target.id==='targetPct'||target.id==='periodDays') render();
+});
+
+document.addEventListener('mousemove',e=>{
+  document.documentElement.style.setProperty('--mx',e.clientX+'px');
+  document.documentElement.style.setProperty('--my',e.clientY+'px');
+},{passive:true});
+document.addEventListener('click',e=>{
+  const button=e.target.closest('button[data-del]');
+  if(button){trades.splice(Number(button.dataset.del),1);render();}
+});
+$('addDay').addEventListener('click',()=>{
+  trades.push(null);render();
+  const next=document.querySelector('input.actual[data-i="'+(trades.length-1)+'"]');
+  if(next)next.focus({preventScroll:true});
+});
+$('themeToggle').addEventListener('click',()=>{
+  let current=document.documentElement.getAttribute('data-theme');
+  if(!current)current=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';
+  const next=current==='dark'?'light':'dark';
+  try{localStorage.setItem(THEME_KEY,next);}catch(_){}
+  applyTheme(next);
+});
+$('exportBackup').addEventListener('click',()=>{
+  const backup={format:'consistency-ledger-backup',version:1,accountSize,consistencyPct,accountCustom:$('accountCustom').value,consistencyCustom:$('consistencyCustom').value,targetPct:$('targetPct').value,periodDays:$('periodDays').value,trades};
+  const blob=new Blob([JSON.stringify(backup,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement('a');
+  link.href=url;link.download='consistency-ledger-backup-'+new Date().toISOString().slice(0,10)+'.json';
+  document.body.appendChild(link);link.click();link.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  notify('Backup downloaded. Keep the JSON file somewhere safe.');
+});
+$('backupFile').addEventListener('change',async e=>{
+  const file=e.target.files&&e.target.files[0];
+  if(!file)return;
+  try{
+    const saved=JSON.parse(await file.text());
+    if(!saved||typeof saved!=='object'||!Array.isArray(saved.trades))throw new Error('Invalid backup');
+    const nextAccount=saved.accountSize===null||saved.accountSize===''?null:Number(saved.accountSize);
+    const nextRule=saved.consistencyPct===null||saved.consistencyPct===''?null:Number(saved.consistencyPct);
+    accountSize=Number.isFinite(nextAccount)&&nextAccount>=0?nextAccount:null;
+    consistencyPct=Number.isFinite(nextRule)&&nextRule>=0&&nextRule<=100?nextRule:null;
+    $('accountCustom').value=saved.accountCustom||(accountSize!==null&&!ACCOUNT_OPTIONS.includes(accountSize)?accountSize:'');
+    $('consistencyCustom').value=saved.consistencyCustom||(consistencyPct!==null&&!CONSISTENCY_OPTIONS.includes(consistencyPct)?consistencyPct:'');
+    $('targetPct').value=saved.targetPct===undefined?'4':saved.targetPct;
+    $('periodDays').value=saved.periodDays===undefined?'30':saved.periodDays;
+    trades=saved.trades.map(v=>v===null||v===''||!Number.isFinite(Number(v))?null:Number(v));
+    render();notify('Backup imported. Your ledger has been restored in this browser.');
+  }catch(_){notify('That file could not be read. Choose a Consistency Ledger JSON backup.');}
+  e.target.value='';
+});
+$('resetLedger').addEventListener('click',()=>{
+  if(!confirm('Clear this ledger from this browser? Export a backup first if you want to keep your entries.'))return;
+  accountSize=null;consistencyPct=null;trades=[];
+  $('accountCustom').value='';$('consistencyCustom').value='';$('targetPct').value='4';$('periodDays').value='30';
+  try{localStorage.removeItem('consistencyLedger');}catch(_){}
+  render();notify('Ledger cleared from this browser.');
+});
+
+load();
+if(accountSize!==null&&!ACCOUNT_OPTIONS.includes(accountSize))$('accountCustom').value=accountSize;
+if(consistencyPct!==null&&!CONSISTENCY_OPTIONS.includes(consistencyPct))$('consistencyCustom').value=consistencyPct;
+buildChips($('accountChips'),ACCOUNT_OPTIONS,accountSize,v=>{accountSize=v;$('accountCustom').value='';},v=>'$'+v.toLocaleString());
+buildChips($('consistencyChips'),CONSISTENCY_OPTIONS,consistencyPct,v=>{consistencyPct=v;$('consistencyCustom').value='';},v=>v+'%');
+render();</script>
+</body>
+</html>
+
